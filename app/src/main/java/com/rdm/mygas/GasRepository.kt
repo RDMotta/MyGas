@@ -19,21 +19,21 @@ class GasRepository private constructor(
         private val gasService: GasService,
         private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) {
-    private var gasListSortOrderCache = CacheOnSuccess(onErrorFallback = { listOf<String>() }) {
-        gasService.customCardSortOrder()
+    private var gasListGasFavoriteCache = CacheOnSuccess(onErrorFallback = { listOf<String>() }) {
+        gasService.customGasFavorite()
     }
 
     val gas: LiveData<List<Gas>> = liveData<List<Gas>> {
         val gasLiveData = gasDao.getGas()
-        val customSortOrder = gasListSortOrderCache.getOrAwait()
+        val customSortOrder = gasListGasFavoriteCache.getOrAwait()
         emitSource(gasLiveData.map { gasList -> gasList.applySort(customSortOrder) })
     }
 
-    private val customSortFlow = gasListSortOrderCache::getOrAwait.asFlow()
+    private val customGasFavoriteFlow = gasListGasFavoriteCache::getOrAwait.asFlow()
 
     val gasFlow: Flow<List<Gas>>
         get() = gasDao.getGasFlow()
-                .combine(customSortFlow) { gas, sortOrder ->
+                .combine(customGasFavoriteFlow) { gas, sortOrder ->
                     gas.applySort(sortOrder)
                 }
                 .flowOn(defaultDispatcher)
@@ -42,7 +42,7 @@ class GasRepository private constructor(
     fun getGas(favorite: Boolean): Flow<List<Gas>> {
         return gasDao.getGasFavoriteFlow(favorite)
                 .map { gasList ->
-                    val sortOrderFromNetwork = gasListSortOrderCache.getOrAwait()
+                    val sortOrderFromNetwork = gasListGasFavoriteCache.getOrAwait()
                     val nextValue = gasList.applyMainSafeSort(sortOrderFromNetwork)
                     nextValue
                 }

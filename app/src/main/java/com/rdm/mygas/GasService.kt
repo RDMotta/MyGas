@@ -12,7 +12,7 @@ import retrofit2.http.GET
 class GasService {
 
     private val retrofit = Retrofit.Builder()
-        .baseUrl("https://raw.githubusercontent.com/")
+        .baseUrl("https://raw.githubusercontent.com/RDMotta/MyGas/master/")
         .client(OkHttpClient())
         .addConverterFactory(GsonConverterFactory.create())
         .build()
@@ -31,16 +31,16 @@ class GasService {
         result.filter { it.favorite == favorite }.shuffled()
     }
 
-    suspend fun customCardSortOrder(): List<String> = withContext(Dispatchers.Default) {
-        val result = customGasService.getCustomGasSortOrder()
+    suspend fun customGasFavorite(): List<String> = withContext(Dispatchers.Default) {
+        val result = customGasService.getCustomGasFavorite()
         result.map { gas -> gas.gasId }
     }
 }
 
 interface CustomGasService {
-    @GET("googlecodelabs/kotlin-coroutines/master/advanced-coroutines-codelab/sunflower/src/main/assets/plants.json")
+    @GET("/app/src/main/assets/gas.json")
     suspend fun getAllGas() : List<Gas>
 
-    @GET("googlecodelabs/kotlin-coroutines/master/advanced-coroutines-codelab/sunflower/src/main/assets/custom_plant_sort_order.json")
-    suspend fun getCustomGasSortOrder() : List<Gas>
+    @GET("/app/src/main/assets/gas_order_favorite.json")
+    suspend fun getCustomGasFavorite() : List<Gas>
 }
