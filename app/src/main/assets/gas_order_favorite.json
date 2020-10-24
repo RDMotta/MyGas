@@ -1,0 +1,20 @@
+[
+ {
+  "gasId": 1,
+  "description": "Posto Estrela",
+  "value": 3.55,
+  "favorite": true
+ },
+ {
+  "gasId": 4,
+  "description": "Posto B12",
+  "value": 3.45,
+  "favorite": true
+ },
+ {
+  "gasId": 5,
+  "description": "Posto BR 226",
+  "value": 3.50,
+  "favorite": true
+ }
+]

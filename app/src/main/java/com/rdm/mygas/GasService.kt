@@ -38,9 +38,9 @@ class GasService {
 }
 
 interface CustomGasService {
-    @GET("")
+    @GET("googlecodelabs/kotlin-coroutines/master/advanced-coroutines-codelab/sunflower/src/main/assets/plants.json")
     suspend fun getAllGas() : List<Gas>
 
-    @GET("")
+    @GET("googlecodelabs/kotlin-coroutines/master/advanced-coroutines-codelab/sunflower/src/main/assets/custom_plant_sort_order.json")
     suspend fun getCustomGasSortOrder() : List<Gas>
 }
