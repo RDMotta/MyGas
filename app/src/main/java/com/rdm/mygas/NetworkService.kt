@@ -38,9 +38,9 @@ class GasService {
 }
 
 interface CustomGasService {
-    @GET("/app/src/main/assets/gas.json")
+    @GET("app/src/main/assets/gas.json")
     suspend fun getAllGas() : List<Gas>
 
-    @GET("/app/src/main/assets/gas_order_favorite.json")
+    @GET("app/src/main/assets/gas_order_favorite.json")
     suspend fun getCustomGasFavorite() : List<Gas>
 }

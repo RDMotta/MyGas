@@ -1,4 +1,4 @@
-package com.rdm.mygas.ui.home
+package com.rdm.mygas.ui.favorite
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -10,20 +10,20 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.rdm.mygas.R
 
-class HomeFragment : Fragment() {
+class FavoriteGasFragment : Fragment() {
 
-    private lateinit var homeViewModel: HomeViewModel
+    private lateinit var favoriteGasViewModel: FavoriteGasViewModel
 
     override fun onCreateView(
             inflater: LayoutInflater,
             container: ViewGroup?,
             savedInstanceState: Bundle?
     ): View? {
-        homeViewModel =
-                ViewModelProvider(this).get(HomeViewModel::class.java)
+        favoriteGasViewModel =
+                ViewModelProvider(this).get(FavoriteGasViewModel::class.java)
         val root = inflater.inflate(R.layout.fragment_favorite_gas, container, false)
-        val textView: TextView = root.findViewById(R.id.text_home)
-        homeViewModel.text.observe(viewLifecycleOwner, Observer {
+        val textView: TextView = root.findViewById(R.id.text_favorite_gas)
+        favoriteGasViewModel.text.observe(viewLifecycleOwner, Observer {
             textView.text = it
         })
         return root
