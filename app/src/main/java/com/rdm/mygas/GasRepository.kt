@@ -1,51 +1,44 @@
 package com.rdm.mygas
 
 import androidx.annotation.AnyThread
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.liveData
-import androidx.lifecycle.map
+import androidx.lifecycle.*
 import com.rdm.funnyquotes.utils.CacheOnSuccess
 import com.rdm.funnyquotes.utils.ComparablePair
 import com.rdm.mygas.model.Gas
 import com.rdm.mygas.model.GasDao
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
 
-@ExperimentalCoroutinesApi
-@FlowPreview
+interface Repository{
+    fun getData(): LiveData<List<Gas>>
+    fun getGas(favorite: Boolean): LiveData<List<Gas>>
+    suspend fun tryUpdateRecentGasCache()
+    suspend fun tryUpdateRecentGasForFavorite(favorite: Boolean)
+}
+
 class GasRepository private constructor(
-        private val gasDao: GasDao,
-        private val gasService: GasService,
-        private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
-) {
-    private var gasListGasFavoriteCache = CacheOnSuccess(onErrorFallback = { listOf<String>() }) {
-        gasService.customGasFavorite()
+    private val gasDao: GasDao,
+    private val gasService: NetworkService,
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
+)  : Repository {
+    private var gasListGasCacheFavorite = CacheOnSuccess(onErrorFallback = { listOf<String>() }) {
+        gasService.gasFavorite()
     }
 
-    val gas: LiveData<List<Gas>> = liveData<List<Gas>> {
+    private var gasListGasCache = CacheOnSuccess(onErrorFallback = { listOf<String>() }) {
+        gasService.allGas()
+    }
+
+    override fun getData(): LiveData<List<Gas>> = liveData<List<Gas>> {
         val gasLiveData = gasDao.getGas()
-        val customSortOrder = gasListGasFavoriteCache.getOrAwait()
-        emitSource(gasLiveData.map { gasList -> gasList.applySort(customSortOrder) })
+        val customSortOrder = gasListGasCache.getOrAwait()
+        emitSource(gasLiveData.map { gasList -> gasList.applySort(customSortOrder as List<String>) })
     }
 
-    private val customGasFavoriteFlow = gasListGasFavoriteCache::getOrAwait.asFlow()
-
-    val gasFlow: Flow<List<Gas>>
-        get() = gasDao.getGasFlow()
-                .combine(customGasFavoriteFlow) { gas, sortOrder ->
-                    gas.applySort(sortOrder)
-                }
-                .flowOn(defaultDispatcher)
-                .conflate()
-
-    fun getGas(favorite: Boolean): Flow<List<Gas>> {
-        return gasDao.getGasFavoriteFlow(favorite)
-                .map { gasList ->
-                    val sortOrderFromNetwork = gasListGasFavoriteCache.getOrAwait()
-                    val nextValue = gasList.applyMainSafeSort(sortOrderFromNetwork)
-                    nextValue
-                }
+    override fun getGas(favorite: Boolean): LiveData<List<Gas>> = liveData<List<Gas>> {
+        val gasLiveData = gasDao.getGasFavorite(favorite)
+        val customSortOrder = gasListGasCacheFavorite.getOrAwait()
+        emitSource(gasLiveData.map { gasList -> gasList.applySort(customSortOrder) })
     }
 
     private fun List<Gas>.applySort(customSortOrder: List<String>): List<Gas> {
@@ -67,17 +60,19 @@ class GasRepository private constructor(
         return true
     }
 
-    suspend fun tryUpdateRecentGasCache() {
-        fetchRecentGas()
+    suspend override fun tryUpdateRecentGasCache() {
+        withContext(defaultDispatcher) {
+            fetchRecentGas()
+        }
     }
 
-    suspend fun tryUpdateRecentGasForFavorite(favorite: Boolean) {
-        if (shouldUpdateGasCache(favorite)) fetchGasForFavorite(favorite)
+    suspend override fun tryUpdateRecentGasForFavorite(favorite: Boolean) {
+        if (shouldUpdateGasCache(favorite)) withContext(defaultDispatcher) {fetchGasForFavorite(favorite)}
     }
 
     private suspend fun fetchRecentGas() {
-        val plants = gasService.allGas()
-        gasDao.insertAll(plants)
+        val gas = gasService.allGas()
+        gasDao.insertAll(gas)
     }
 
     private suspend fun fetchGasForFavorite(favorite: Boolean): List<Gas> {
@@ -90,9 +85,9 @@ class GasRepository private constructor(
         // For Singleton instantiation
         @Volatile private var instance: GasRepository? = null
 
-        fun getInstance(gasDao: GasDao, gasService: GasService) =
+        fun getInstance(gasDao: GasDao, networkService: NetworkService) =
                 instance ?: synchronized(this) {
-                    instance ?: GasRepository(gasDao, gasService).also { instance = it }
+                    instance ?: GasRepository(gasDao, networkService).also { instance = it }
                 }
     }
 }

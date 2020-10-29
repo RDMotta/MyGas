@@ -1,31 +1,50 @@
-package com.rdm.mygas.ui.favorite
+package com.rdm.mygas.ui.gas
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
-import com.rdm.mygas.R
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.*
+import com.google.android.material.snackbar.Snackbar
+import com.rdm.mygas.databinding.FragmentGasListBinding
+import com.rdm.mygas.util.Injector
 
 class FavoriteGasFragment : Fragment() {
-
-    private lateinit var favoriteGasViewModel: FavoriteGasViewModel
+    private val viewModel: GasListViewModel by viewModels {
+        Injector.provideGasListViewModelFactory(requireContext())
+    }
 
     override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View? {
-        favoriteGasViewModel =
-                ViewModelProvider(this).get(FavoriteGasViewModel::class.java)
-        val root = inflater.inflate(R.layout.fragment_favorite_gas, container, false)
-        val textView: TextView = root.findViewById(R.id.text_favorite_gas)
-        favoriteGasViewModel.text.observe(viewLifecycleOwner, Observer {
-            textView.text = it
-        })
-        return root
+        val binding = FragmentGasListBinding.inflate(inflater, container, false)
+        context ?: return binding.root
+
+        viewModel.spinner.observe(viewLifecycleOwner) { show ->
+            binding.spinner.visibility = if (show) View.VISIBLE else View.GONE
+        }
+
+        viewModel.snackbar.observe(viewLifecycleOwner) { text ->
+            text?.let {
+                Snackbar.make(binding.root, text, Snackbar.LENGTH_SHORT).show()
+                viewModel.onSnackbarShown()
+            }
+        }
+
+        val adapter = GasAdapter()
+        binding.gasList.adapter = adapter
+        subscribeUi(adapter)
+        viewModel.setGasFavorite(true)
+        return binding.root
+    }
+
+    private fun subscribeUi(adapter: GasAdapter) {
+        viewModel.fetchFavoriteData().observe(viewLifecycleOwner) { gas ->
+            adapter.submitList(gas)
+        }
     }
 }

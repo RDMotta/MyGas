@@ -35,4 +35,4 @@ abstract class AppDatabase : RoomDatabase() {
     }
 }
 
-private const val DATABASE_NAME = "cards-db"
+private const val DATABASE_NAME = "gas-db"

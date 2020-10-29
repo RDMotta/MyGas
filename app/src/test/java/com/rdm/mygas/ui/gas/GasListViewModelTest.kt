@@ -1,37 +1,62 @@
-package com.rdm.mygas.ui
+package com.rdm.mygas.ui.gas
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.internal.runner.junit4.AndroidAnnotatedBuilder
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
+import com.rdm.mygas.Repository
 import com.rdm.mygas.model.Gas
-import com.rdm.mygas.ui.gas.GasListViewModel
-import kotlinx.coroutines.Dispatchers
-import org.junit.After
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.mockito.Mock
-import org.mockito.Mockito.verify
-import org.mockito.MockitoAnnotations
 
-import java.util.*
-
-@RunWith(AndroidJUnit4::class)
 class GasListViewModelTest {
 
     @get:Rule
     val rule = InstantTaskExecutorRule()
 
-    private lateinit var viewModel: GasListViewModel
+    private val repository = mockk<Repository>()
+    private val dataObserver = mockk<Observer<List<Gas>>>(relaxed = true)
+    private val dataObserverFavorite = mockk<Observer<List<Gas>>>(relaxed = true)
 
     @Test
-    fun changingViewModelValue_ShouldSetListViewItems() {
-        val scenario = launchFragment<MyFragment>()
-        scenario.onFragment { fragment ->
-            fragment.myViewModel.status.value = "status1"
-            assert(fragment.myListView.adapter.getItem(0) == "a")
-        }
+    fun `When ViewModel call repository`(){
+
+        val mockListFavorite = MutableLiveData<List<Gas>>()
+        mockListFavorite.postValue(listOf<Gas>(
+            Gas("1","Gas Test1",4.5,false),
+            Gas("2","Gas Test2",3.5,true),
+            Gas("3","Gas Test3",4.5,false)))
+
+        val mockList = MutableLiveData<List<Gas>>()
+        mockList.postValue(listOf<Gas>(
+            Gas("1","Gas Test1",2.0,true),
+            Gas("2","Gas Test2",2.0,true)))
+
+        every { repository.getData() } answers {mockList}
+        every { repository.getGas(true) } answers {mockListFavorite}
+
+        val viewModel = initViewModel()
+
+        viewModel.fetchData()
+        viewModel.fetchFavoriteData()
+
+        verify { repository.getData() }
+        verify { repository.getGas(true) }
+        verify { dataObserver.onChanged(mockList.value) }
+        verify { dataObserverFavorite.onChanged(mockListFavorite.value) }
     }
 
+    private fun initViewModel(): GasListViewModel{
+        val viewModel = GasListViewModel(repository)
+
+        viewModel.fetchData().observeForever(dataObserver)
+        viewModel.fetchFavoriteData().observeForever(dataObserverFavorite)
+        return viewModel
+    }
 }
+
+
+

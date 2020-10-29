@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">MyGas</string>
-    <string name="title_home">Home</string>
-    <string name="title_dashboard">Dashboard</string>
-    <string name="title_notifications">Notifications</string>
+    <string name="title_gas">Gas</string>
+    <string name="title_gas_favorite">Favorite Gas</string>
+
+    <string name="txt_favorite">Favorite</string>
+    <string name="txt_gas">Gas</string>
+    <string name="txt_gas_favorite">Favorite Gas</string>
 </resources>

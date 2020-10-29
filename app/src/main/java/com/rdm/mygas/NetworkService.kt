@@ -9,7 +9,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 
-class GasService {
+class NetworkService {
 
     private val retrofit = Retrofit.Builder()
         .baseUrl("https://raw.githubusercontent.com/RDMotta/MyGas/master/")
@@ -17,30 +17,30 @@ class GasService {
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
-    private val customGasService = retrofit.create(CustomGasService::class.java)
+    private val gasService = retrofit.create(GasService::class.java)
 
     suspend fun allGas(): List<Gas> = withContext(Dispatchers.Default) {
         delay(1500)
-        val result = customGasService.getAllGas()
+        val result = gasService.getAllGas()
         result.shuffled()
     }
 
     suspend fun gasByFavorite(favorite: Boolean) = withContext(Dispatchers.Default) {
         delay(1500)
-        val result = customGasService.getAllGas()
+        val result = gasService.getAllGas()
         result.filter { it.favorite == favorite }.shuffled()
     }
 
-    suspend fun customGasFavorite(): List<String> = withContext(Dispatchers.Default) {
-        val result = customGasService.getCustomGasFavorite()
+    suspend fun gasFavorite(): List<String> = withContext(Dispatchers.Default) {
+        val result = gasService.getGasFavorite()
         result.map { gas -> gas.gasId }
     }
 }
 
-interface CustomGasService {
+interface GasService {
     @GET("app/src/main/assets/gas.json")
     suspend fun getAllGas() : List<Gas>
 
     @GET("app/src/main/assets/gas_order_favorite.json")
-    suspend fun getCustomGasFavorite() : List<Gas>
+    suspend fun getGasFavorite() : List<Gas>
 }

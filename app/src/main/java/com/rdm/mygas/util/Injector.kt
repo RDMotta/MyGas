@@ -1,34 +1,34 @@
-package com.example.android.advancedcoroutines.utils
+package com.rdm.mygas.util
 
 import android.content.Context
 import androidx.annotation.VisibleForTesting
-import com.example.android.advancedcoroutines.NetworkService
-import com.example.android.advancedcoroutines.ui.PlantListViewModelFactory
-import com.example.android.advancedcoroutines.PlantRepository
+import com.rdm.mygas.GasRepository
+import com.rdm.mygas.GasService
+import com.rdm.mygas.NetworkService
+import com.rdm.mygas.ui.gas.GasListViewModelFactory
 
 interface ViewModelFactoryProvider {
-    fun providePlantListViewModelFactory(context: Context): PlantListViewModelFactory
+    fun provideGasListViewModelFactory(context: Context): GasListViewModelFactory
 }
 
 val Injector: ViewModelFactoryProvider
     get() = currentInjector
 
 private object DefaultViewModelProvider: ViewModelFactoryProvider {
-    private fun getPlantRepository(context: Context): PlantRepository {
-        return PlantRepository.getInstance(
-            plantDao(context),
-            plantService()
+    private fun getGasRepository(context: Context): GasRepository {
+        return GasRepository.getInstance(
+            gasDao(context),
+            gasService()
         )
     }
 
-    private fun plantService() = NetworkService()
+    private fun gasService() = NetworkService()
+    private fun gasDao(context: Context) = AppDatabase.
+        getInstance(context.applicationContext).gasDao()
 
-    private fun plantDao(context: Context) =
-        AppDatabase.getInstance(context.applicationContext).plantDao()
-
-    override fun providePlantListViewModelFactory(context: Context): PlantListViewModelFactory {
-        val repository = getPlantRepository(context)
-        return PlantListViewModelFactory(repository)
+    override fun provideGasListViewModelFactory(context: Context): GasListViewModelFactory {
+        val repository = getGasRepository(context)
+        return GasListViewModelFactory(repository)
     }
 }
 
